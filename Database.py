@@ -3,7 +3,7 @@ import sqlite3
 
 cxn = sqlite3.connect("temp.db")
 cur=cxn.cursor()
-cur.execute('''CREATE TABLE IF NOT EXISTS main (FROM_ID varchar(30), 
+cur.execute('''CREATE TABLE IF NOT EXISTS main (MID INTEGER PRIMARY KEY AUTOINCREMENT,FROM_ID varchar(30), 
 TO_ID varchar(30), 
 SUBJECT varchar(120), 
 BODY varchar(1000),
