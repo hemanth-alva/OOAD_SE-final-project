@@ -53,7 +53,7 @@ class send_mail():
 def received (uname):
     cxn = sqlite3.connect("temp.db")
     cur = cxn.cursor()
-    state = f"SELECT FROM_ID,SUBJECT,BODY,dt FROM main WHERE TO_ID='{uname}';"
+    state = f"SELECT FROM_ID,SUBJECT,BODY,dt FROM main WHERE TO_ID='{uname}' ORDER BY DT DESC;"
     x = cur.execute(state)
     for i in x:
         print("From_ID: ", i[0])
