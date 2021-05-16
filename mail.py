@@ -86,10 +86,12 @@ class User:
         elif (int(clabel) >0) and (int(clabel) < len(col)-1):
             colm = col[int(clabel)+1]
             print("\n----------\n"+colm+"\n---------")
+            cxn.close()
             self.display(colm)
         else:
             print("Invalid input")
             self.display_labels()
+    
 
 
 class Sender():
@@ -400,6 +402,135 @@ class Mailbox(User):
             print("Invalid mid. Kindly recheck")
             self.delete_mail()
 
+
+class Search(User):
+    def __init__(self,parent_obj,uname,table):
+        self.parent = parent_obj
+        self.uname=uname[:-10]
+        self.username = uname
+        self.table = table
+
+    def label(self):
+        col = []
+        i=2
+        cxn = sqlite3.connect("temp.db")
+        cur = cxn.cursor()
+        cur.execute("PRAGMA TABLE_INFO({})".format(self.table))
+        for j in cur.fetchall():
+            col.append(j[1])
+        print("\n Present Label: \n")
+        while i < len(col):
+            print(str(i-1)+". "+str(col[i]))
+            i += 1
+        print("Choose number associated with label:")
+        print("Choose 0 to exit: ")
+        clabel = input()
+        if (int(clabel) == 0):
+            exit()
+        elif (int(clabel) >0) and (int(clabel) < len(col)-1):
+            colm = col[int(clabel)+1]
+            print("\n----------\n"+colm+"\n---------")
+            cxn.close()
+            self.search_mail_label(colm)
+        else:
+            print("Invalid input")
+            self.label()
+
+    def search_mail_label(self,col):
+        cxn = sqlite3.connect("temp.db")
+        cur = cxn.cursor()
+        search_temp = input("\n Please enter the word that needs to be searched. If there are multiple words, enter with space as seperation:  ").lower()
+        search_list = search_temp.split(" ")
+        time.sleep(1)
+        print("\n-----------\n Search Result\n-----------\n")
+        #print("     "+search_word+":\n")
+        query = "SELECT main.FROM_ID,main.SUBJECT,main.BODY,main.dt FROM MAIN INNER JOIN "+ self.table+" ON main.MID = "+ self.table+".MID WHERE "+ self.table+"."+col+" = 1 ORDER BY main.DT DESC;"
+        x = cur.execute(query).fetchall()
+        state = 0
+        query_op = []
+        for i in range(len(x)):
+	        for search_word in search_list:
+	            if (search_word in x[i][0].lower()) or (search_word in x[i][1].lower()) or(search_word in x[i][2].lower()):
+	                    # print("From_ID: ", x[i][0])
+	                    # print("Subject: ", x[i][1])
+	                    # print("Body: ", x[i][2])
+	                    # print("Date and time: ", x[i][3])
+	                    # print("\n")
+	                    if i not in query_op:
+	                    	query_op.append(i)
+	                    	state = 1
+	            else:
+	            	pass
+        if state == 0:
+            print("Sorry but there no mail in association with any of these : ", search_temp)
+        else:
+        	for i in query_op:
+        		print("From_ID: ",x[i][0])
+        		print("Subject: ",x[i][1])
+        		print("Body: ",x[i][2])
+        		print("Date and time: ",x[i][3])
+        		print("\n")
+        cxn.commit()
+        cxn.close()
+
+
+
+
+    def search_bar(self):
+        print("------------------------------------------------")
+        print("Enter 1 to search on all mail")
+        print("Enter 2 to search on a specific mail")
+        print("Enter 3 to go back")
+        print("Enter any to exit")
+        temp = input()
+        if (temp == '1'):
+            system('cls')
+            search_temp = input("\n Please enter the word that needs to be searched. If there are multiple words, enter them space seperated: ").lower()
+            search_list = search_temp.split(" ")
+            time.sleep(1)
+            print("\n-----------\n Search Result\n-----------\n")
+            #print("     "+search_word+":\n")
+            cxn = sqlite3.connect("temp.db")
+            cur = cxn.cursor()
+            query = f"SELECT FROM_ID,SUBJECT,BODY,dt,TO_ID FROM main WHERE TO_ID='{self.username}' ORDER BY DT DESC;"
+            x = cur.execute(query).fetchall()
+            #print(x)
+            state = 0
+            query_op = []
+            for i in range(len(x)):
+	            for search_word in search_list:
+	                if (search_word in x[i][0].lower()) or (search_word in x[i][1].lower()) or(search_word in x[i][2].lower()):
+	                    # print("From_ID: ", x[i][0])
+	                    # print("Subject: ", x[i][1])
+	                    # print("Body: ", x[i][2])
+	                    # print("Date and time: ", x[i][3])
+	                    # print("\n")
+	                    if i not in query_op:
+	                    	query_op.append(i)
+	                    	state = 1
+	                else:
+	                    pass
+            if state == 0:
+                print("Sorry but there no mail in association with any of these : ", search_temp)
+            else:
+            	for i in query_op:
+            		print("From ID: ", x[i][0])
+            		print("Subject: ",x[i][1])
+            		print("Body: ",x[i][2])
+            		print("Date and Time: ", x[i][3])
+            		print("\n")
+            cxn.commit()
+            cxn.close()
+        elif(temp == '2'):
+            system('cls')
+            self.label()
+        elif(temp == '3'):
+            return
+        else:
+            exit()
+
+
+
 def check(answer,uname,to_id,subject,body):
     mail = Sender(uname,to_id,subject,body)
     time.sleep(5)
@@ -431,6 +562,7 @@ if __name__ == '__main__':
         uname = user.username
         table = user.table
         mbox = Mailbox(user,uname,table)
+        sbox = Search(user,uname,table)
     elif(temp == "2"):
         exit()
     else:
@@ -445,7 +577,8 @@ if __name__ == '__main__':
         print("3. Manage Labels")
         print("4. Labels")
         print("5. Delete from received mail")
-        print("6. Close")
+        print("6. Search")
+        print("7. Close")
         t1 = int(input())
         if(t1==1):
             system('cls')
@@ -478,6 +611,10 @@ if __name__ == '__main__':
             system('cls')
             print("------------\n Delete mail\n--------------")
             mbox.delete_mail()
+        elif(t1==6):
+            system('cls')
+            print("------------\n Search mail\n------------")
+            sbox.search_bar()
         else:
             print("------------------- SHUTTING DOWN MAILING SYSTEM------------------ ")
             time.sleep(2)
